@@ -1,14 +1,16 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.gradle.targets.js
+package org.jetbrains.kotlin.gradle.targets.js.subtargets
 
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinOnlyTarget
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsSubTargetDsl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmResolveTask
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
@@ -17,12 +19,16 @@ import org.jetbrains.kotlin.gradle.testing.internal.configureConventions
 import org.jetbrains.kotlin.gradle.testing.internal.registerTestTask
 import org.jetbrains.kotlin.utils.addIfNotNull
 
-abstract class KotlinJsInnerTargetConfigurator(
-    val target: KotlinOnlyTarget<KotlinJsCompilation>,
+abstract class KotlinJsSubTarget(
+    val target: KotlinJsTarget,
     private val disambiguationClassifier: String
-) {
+) : KotlinJsSubTargetDsl {
     val project get() = target.project
+
     val npmResolveTask = project.createOrRegisterTask<NpmResolveTask>("npmResolve") {}
+
+    val runTaskName = disambiguateCamelCased("run")
+    val testTaskName = disambiguateCamelCased("test")
 
     fun configure() {
         configureTests()
@@ -54,7 +60,6 @@ abstract class KotlinJsInnerTargetConfigurator(
 
     private fun configureTests(compilation: KotlinJsCompilation) {
         val compileTask = compilation.compileKotlinTask
-        val testTaskName = disambiguateCamelCased("test")
 
         compileTask.dependsOn(npmResolveTask)
 
@@ -75,7 +80,7 @@ abstract class KotlinJsInnerTargetConfigurator(
 
             testJs.configureConventions()
 
-            project.tasks.maybeCreate("test").dependsOn(testJs)
+            target.testTask.dependsOn(testJs)
         }
 
         registerTestTask(testJs)
@@ -101,4 +106,8 @@ abstract class KotlinJsInnerTargetConfigurator(
     }
 
     protected abstract fun configureRun(compilation: KotlinJsCompilation)
+
+    override fun testTask(body: KotlinJsTest.() -> Unit) {
+        (project.tasks.getByName(testTaskName) as KotlinJsTest).body()
+    }
 }

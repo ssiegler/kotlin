@@ -18,8 +18,10 @@ abstract class KotlinOnlyTargetPreset<T : KotlinCompilation<*>>(
     protected open fun provideTargetDisambiguationClassifier(target: KotlinOnlyTarget<T>): String? =
         target.targetName
 
+    protected open fun createKotlinOnlyTarget() = KotlinOnlyTarget<T>(project, platformType)
+
     override fun createTarget(name: String): KotlinOnlyTarget<T> {
-        val result = KotlinOnlyTarget<T>(project, platformType).apply {
+        val result = createKotlinOnlyTarget().apply {
             targetName = name
             disambiguationClassifier = provideTargetDisambiguationClassifier(this@apply)
             preset = this@KotlinOnlyTargetPreset
