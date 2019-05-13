@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.gradle.internal.testing.TCServiceMessagesClientSetti
 import org.jetbrains.kotlin.gradle.internal.testing.TCServiceMessagesTestExecutionSpec
 import org.jetbrains.kotlin.gradle.plugin.HasKotlinDependencies
 import org.jetbrains.kotlin.gradle.targets.js.internal.parseNodeJsStackTraceAsJvm
+import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinGradleNpmPackage
+import org.jetbrains.kotlin.gradle.targets.js.npm.NpmPackageVersion
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
+import org.jetbrains.kotlin.gradle.targets.js.npm.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTestFramework
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.testing.IgnoredTestSuites
@@ -20,11 +23,8 @@ class KotlinNodeJsTestRunner : KotlinJsTestFramework {
     @Input
     var ignoredTestSuites: IgnoredTestSuites = IgnoredTestSuites.showWithContents
 
-    override fun configure(dependenciesHolder: HasKotlinDependencies) {
-        dependenciesHolder.dependencies {
-            runtimeOnly(kotlin("test-nodejs-runner"))
-        }
-    }
+    override val requiredNpmDependencies: Collection<RequiredKotlinJsDependency>
+        get() = listOf(KotlinGradleNpmPackage("test-nodejs-runner"))
 
     override fun createTestExecutionSpec(
         task: KotlinJsTest,
