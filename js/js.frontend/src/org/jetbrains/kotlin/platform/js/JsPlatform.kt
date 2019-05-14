@@ -15,7 +15,15 @@ abstract class JsPlatform : SimplePlatform("JS") {
 }
 
 object JsPlatforms {
-    val defaultJsPlatform: TargetPlatform = object : JsPlatform() {}.toTargetPlatform()
+    private object DefaultSimpleJsPlatform : JsPlatform()
+
+    @Suppress("DEPRECATION_ERROR")
+    // Lazy is needed to avoid static initialization loop through JsPlatform.INSTANCE
+    val defaultJsPlatform: TargetPlatform by lazy {
+        object : TargetPlatform(setOf(DefaultSimpleJsPlatform)),
+            // Needed for backward compatibility, because old code uses INSTANCECHECKs instead of calling extensions
+            org.jetbrains.kotlin.js.resolve.JsPlatform {}
+    }
 
     val allJsPlatforms: List<TargetPlatform> = listOf(defaultJsPlatform)
 }

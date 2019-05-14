@@ -15,7 +15,15 @@ abstract class KonanPlatform : SimplePlatform("Native") {
 }
 
 object KonanPlatforms {
-    val defaultKonanPlatform: TargetPlatform = object : KonanPlatform() {}.toTargetPlatform()
+    private object DefaultSimpleKonanPlatform : KonanPlatform()
+
+    @Suppress("DEPRECATION_ERROR")
+    // Lazy is needed to avoid static initialization loop through KonanPlatform.INSTANCE
+    val defaultKonanPlatform: TargetPlatform by lazy {
+        object : TargetPlatform(setOf(DefaultSimpleKonanPlatform)),
+            // Needed for backward compatibility, because old code uses INSTANCECHECKs instead of calling extensions
+            org.jetbrains.kotlin.resolve.konan.platform.KonanPlatform {}
+    }
 
     val allKonanPlatforms: List<TargetPlatform> = listOf(defaultKonanPlatform)
 }

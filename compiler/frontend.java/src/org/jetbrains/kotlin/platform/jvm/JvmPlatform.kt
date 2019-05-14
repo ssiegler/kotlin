@@ -17,10 +17,18 @@ abstract class JvmPlatform : SimplePlatform("JVM") {
 }
 
 object JvmPlatforms {
+    private object UnspecifiedSimpleJvmPlatform : JvmPlatform()
+
     private val jvmTargetToJdkPlatform: Map<JvmTarget, TargetPlatform> =
         JvmTarget.values().map { it to JdkPlatform(it).toTargetPlatform() }.toMap()
 
-    val defaultJvmPlatform: TargetPlatform = jvmTargetToJdkPlatform[JvmTarget.DEFAULT]!!
+    @Suppress("DEPRECATION_ERROR")
+    // Lazy is needed to avoid static initialization loop through JvmPlatform.INSTANCE
+    val defaultJvmPlatform: TargetPlatform by lazy {
+        object : TargetPlatform(setOf(UnspecifiedSimpleJvmPlatform)),
+            // Needed for backward compatibility, because old code uses INSTANCECHECKs instead of calling extensions
+            org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform {}
+    }
 
     val jvm16: TargetPlatform = jvmTargetToJdkPlatform[JvmTarget.JVM_1_6]!!
     val jvm18: TargetPlatform = jvmTargetToJdkPlatform[JvmTarget.JVM_1_8]!!

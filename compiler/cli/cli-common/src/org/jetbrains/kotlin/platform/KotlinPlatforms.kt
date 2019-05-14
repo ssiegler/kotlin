@@ -14,14 +14,19 @@ import org.jetbrains.kotlin.platform.konan.KonanPlatforms
 import org.jetbrains.kotlin.platform.konan.KonanPlatforms.defaultKonanPlatform
 
 object CommonPlatforms {
-
-    val defaultCommonPlatform: TargetPlatform = TargetPlatform(
-        setOf(
-            defaultJvmPlatform.single(),
-            defaultJsPlatform.single(),
-            defaultKonanPlatform.single()
-        )
-    )
+    @Suppress("DEPRECATION_ERROR")
+    // Lazy is needed to avoid static initialization loop through CommonPlatform.INSTANCE
+    val defaultCommonPlatform: TargetPlatform by lazy {
+        object : TargetPlatform(
+            setOf(
+                defaultJvmPlatform.single(),
+                defaultJsPlatform.single(),
+                defaultKonanPlatform.single()
+            )
+        ),
+            // Needed for backward compatibility, because old code uses INSTANCECHECKs instead of calling extensions
+            org.jetbrains.kotlin.analyzer.common.CommonPlatform {}
+    }
 
     val allSimplePlatforms: List<TargetPlatform>
         get() = sequence {
