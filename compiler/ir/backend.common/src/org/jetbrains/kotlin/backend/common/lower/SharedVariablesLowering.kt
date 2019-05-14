@@ -80,16 +80,23 @@ class SharedVariablesLowering(val context: BackendContext) : FunctionLoweringPas
                 override fun visitVariable(declaration: IrVariable, data: IrDeclarationParent?) {
                     declaration.acceptChildren(this, data)
 
-                    if (declaration.isVar) {
-                        relevantVars.add(declaration)
-                    }
+                    relevantVars.add(declaration)
                 }
 
-                override fun visitValueAccess(expression: IrValueAccessExpression, data: IrDeclarationParent?) {
+                override fun visitGetValue(expression: IrGetValue, data: IrDeclarationParent?) {
                     expression.acceptChildren(this, data)
 
                     val value = expression.symbol.owner
-                    if (value in relevantVars && (value as IrVariable).parent != data) {
+                    if (value in relevantVars && value is IrVariable && value.isVar && value.parent != data) {
+                        sharedVariables.add(value)
+                    }
+                }
+
+                override fun visitSetVariable(expression: IrSetVariable, data: IrDeclarationParent?) {
+                    expression.acceptChildren(this, data)
+
+                    val value = expression.symbol.owner
+                    if (value in relevantVars && value.parent != data) {
                         sharedVariables.add(value)
                     }
                 }
