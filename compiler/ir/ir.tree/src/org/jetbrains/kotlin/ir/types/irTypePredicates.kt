@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.types
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -61,6 +62,11 @@ fun IrType.isLong(): Boolean = isNotNullClassType(KotlinBuiltIns.FQ_NAMES._long)
 fun IrType.isFloat(): Boolean = isNotNullClassType(KotlinBuiltIns.FQ_NAMES._float)
 fun IrType.isDouble(): Boolean = isNotNullClassType(KotlinBuiltIns.FQ_NAMES._double)
 fun IrType.isNumber(): Boolean = isNotNullClassType(KotlinBuiltIns.FQ_NAMES.number)
+
+fun IrType.isUByte(): Boolean = isNotNullClassType(UnsignedType.UBYTE.classId.asSingleFqName().toUnsafe())
+fun IrType.isUShort(): Boolean = isNotNullClassType(UnsignedType.USHORT.classId.asSingleFqName().toUnsafe())
+fun IrType.isUInt(): Boolean = isNotNullClassType(UnsignedType.UINT.classId.asSingleFqName().toUnsafe())
+fun IrType.isULong(): Boolean = isNotNullClassType(UnsignedType.ULONG.classId.asSingleFqName().toUnsafe())
 
 fun IrType.isComparable(): Boolean = isNotNullClassType(KotlinBuiltIns.FQ_NAMES.comparable.toUnsafe())
 fun IrType.isCharSequence(): Boolean = isNotNullClassType(KotlinBuiltIns.FQ_NAMES.charSequence)

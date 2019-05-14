@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpressionWithCopy
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
 import org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
@@ -310,6 +311,18 @@ class TypeOperatorLowering(val context: JsIrBackendContext) : FileLoweringPass {
                 return expression.run { IrCompositeImpl(startOffset, endOffset, unit, null, listOf(argument, unitValue)) }
             }
 
+            private inline fun makeUConst(
+                value: IrExpression,
+                classSymbol: IrClassSymbol,
+                mask: (IrExpression) -> IrExpression
+            ): IrExpression {
+                require(classSymbol.isBound)
+                val constructor = classSymbol.owner.declarations.single { it is IrConstructor } as IrConstructor
+                val constructorCall = IrConstructorCallImpl.fromSymbolOwner(constructor.constructedClassType, constructor.symbol)
+                return constructorCall.apply { putValueArgument(0, mask(value)) }
+            }
+
+
             private fun lowerIntegerCoercion(expression: IrTypeOperatorCall, declaration: IrDeclarationParent): IrExpression {
                 assert(expression.operator === IrTypeOperator.IMPLICIT_INTEGER_COERCION)
                 assert(expression.argument.type.isInt())
@@ -321,15 +334,25 @@ class TypeOperatorLowering(val context: JsIrBackendContext) : FileLoweringPass {
                     shr(shl(and(arg, mask), shift), shift.copy())
                 }
 
+                fun makeByte(value: IrExpression) = maskOp(value, byteMask, lit24)
+                fun makeShort(value: IrExpression) = maskOp(value, shortMask, lit16)
+                fun makeLong(value: IrExpression) = JsIrBuilder.buildCall(context.intrinsics.jsToLong).apply { putValueArgument(0, value) }
+                fun makeUByte(value: IrExpression) = makeUConst(value, context.intrinsics.uByteClassSymbol) { makeByte(it) }
+                fun makeUShort(value: IrExpression) = makeUConst(value, context.intrinsics.uShortClassSymbol) { makeShort(it) }
+                fun makeUInt(value: IrExpression) = makeUConst(value, context.intrinsics.uIntClassSymbol) { it }
+                fun makeULong(value: IrExpression) = makeUConst(value, context.intrinsics.uLongClassSymbol) { makeLong(it) }
+
                 val newStatements = mutableListOf<IrStatement>()
                 val argument = cacheValue(expression.argument, newStatements, declaration)
 
                 val casted = when {
-                    toType.isByte() -> maskOp(argument(), byteMask, lit24)
-                    toType.isShort() -> maskOp(argument(), shortMask, lit16)
-                    toType.isLong() -> JsIrBuilder.buildCall(context.intrinsics.jsToLong).apply {
-                        putValueArgument(0, argument())
-                    }
+                    toType.isByte() -> makeByte(argument())
+                    toType.isShort() -> makeShort(argument())
+                    toType.isLong() -> makeLong(argument())
+                    toType.isUByte() -> makeUByte(argument())
+                    toType.isUShort() -> makeUShort(argument())
+                    toType.isUInt() -> makeUInt(argument())
+                    toType.isULong() -> makeULong(argument())
                     else -> error("Unreachable execution (coercion to non-Integer type")
                 }
 
