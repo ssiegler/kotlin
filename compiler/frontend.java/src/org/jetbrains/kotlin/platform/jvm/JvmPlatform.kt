@@ -33,7 +33,8 @@ object JvmPlatforms {
     val jvm16: TargetPlatform = jvmTargetToJdkPlatform[JvmTarget.JVM_1_6]!!
     val jvm18: TargetPlatform = jvmTargetToJdkPlatform[JvmTarget.JVM_1_8]!!
 
-    fun jvmPlatformByTargetVersion(targetVersion: JvmTarget) = jvmTargetToJdkPlatform[targetVersion]!!
+    fun jvmPlatformByTargetVersion(targetVersion: JvmTarget): TargetPlatform =
+        jvmTargetToJdkPlatform[targetVersion]!!
 
     val allJvmPlatforms: List<TargetPlatform> = jvmTargetToJdkPlatform.values.toList()
 }
